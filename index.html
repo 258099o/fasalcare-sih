@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FasalCare — Smart Agriculture Copilot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="brand">🌾 FasalCare</div>
+    <div class="lang-switch">
+      <button id="langHi" class="lang-btn active" onclick="setLanguage('hi')">हिंदी</button>
+      <span class="lang-sep">|</span>
+      <button id="langEn" class="lang-btn" onclick="setLanguage('en')">EN</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Screen 1: Home Screen -->
+    <section id="screen-home" class="screen active">
+      <div class="hero-card">
+        <p class="tagline" data-t="tagline">आपकी खेती की आसान डिजिटल मदद</p>
+      </div>
+
+      <!-- Quick Snapshot -->
+      <div id="homeSnapshot" class="home-snapshot hidden">
+        <div id="snapWeather"></div>
+        <div id="snapCrop"></div>
+      </div>
+
+      <!-- NEW PROMINENT FEATURE: Farmer Assistant Card -->
+      <div class="assistant-hero-card">
+        <div class="ahc-badge">🤖 AI Assistant</div>
+        <h2 data-t="assistantCardTitle">मेरी खेती के बारे में पूछें</h2>
+        <p data-t="assistantCardSubtitle">अपने खेत की स्थिति बताएं और तुरंत विशेषज्ञ सलाह पाएं</p>
+        <div class="ahc-actions">
+          <button class="btn btn-voice" onclick="startAssistant('voice')">
+            <span>🎙️</span> <span data-t="btnSpeak">बोलकर बताएं</span>
+          </button>
+          <button class="btn btn-type" onclick="startAssistant('text')">
+            <span>✍️</span> <span data-t="btnType">लिखकर बताएं</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Grid -->
+      <div class="menu-grid">
+        <button class="card-btn" onclick="goTo('weather')">
+          <span class="cb-icon">🌦️</span>
+          <span class="cb-text" data-t="cardWeather">आज का मौसम</span>
+        </button>
+        <button class="card-btn" onclick="goTo('crop')">
+          <span class="cb-icon">🌱</span>
+          <span class="cb-text" data-t="cardCrop">मेरी फसल</span>
+        </button>
+        <button class="card-btn" onclick="goTo('tips')">
+          <span class="cb-icon">💡</span>
+          <span class="cb-text" data-t="cardTips">खेती की सलाह</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Screen 2: Interactive Chatbot Assistant -->
+    <section id="screen-assistant" class="screen">
+      <div class="screen-header">
+        <button class="btn-back" onclick="goTo('home')">← <span data-t="navHome">होम</span></button>
+        <h2 data-t="assistantHeader">FasalCare सहायक</h2>
+      </div>
+
+      <!-- Conversation Container -->
+      <div class="chat-container">
+        <div id="chatMessages" class="chat-messages">
+          <!-- Dynamically populated messages -->
+        </div>
+
+        <!-- Quick Response Chips (Options / Skip) -->
+        <div id="chatQuickOptions" class="quick-options"></div>
+
+        <!-- Review Profile View (Appears after questions) -->
+        <div id="chatReviewBox" class="chat-review-box hidden">
+          <h3 data-t="reviewTitle">आपकी जानकारी</h3>
+          <div id="reviewDetails" class="review-details"></div>
+          <button id="btnAnalyze" class="btn btn-primary" onclick="submitToGemini()">
+            🔍 <span data-t="btnAnalyzeText">मेरी जानकारी का विश्लेषण करें</span>
+          </button>
+        </div>
+
+        <!-- Analysis Result Dashboard -->
+        <div id="analysisResult" class="analysis-result hidden">
+          <div class="summary-header">
+            <h3>🌾 <span data-t="summaryTitle">FasalCare विश्लेषण रिपोर्ट</span></h3>
+            <button class="btn-listen" onclick="speakSummary()">🔊 <span data-t="listen">सुनें</span></button>
+          </div>
+          <div id="summaryContent" class="summary-body"></div>
+          <button class="btn btn-secondary" onclick="restartAssistant()" data-t="btnRestart">🔄 नई जानकारी पूछें</button>
+        </div>
+      </div>
+
+      <!-- Bottom Chat Input Bar -->
+      <div id="chatInputBar" class="chat-input-bar">
+        <button id="btnChatMic" class="btn-icon" onclick="startChatVoice()">🎙️</button>
+        <input type="text" id="chatInput" data-t-ph="typeAnswer" placeholder="अपना जवाब लिखें...">
+        <button id="btnChatSend" class="btn-send" onclick="submitChatInput()" data-t="btnSend">भेजें</button>
+      </div>
+    </section>
+
+    <!-- Screen 3: Weather -->
+    <section id="screen-weather" class="screen">
+      <h2 data-t="weatherTitle">आज का मौसम</h2>
+      <button class="btn btn-location" onclick="fetchByGPS()">📍 <span data-t="useLocation">मेरा स्थान बताएं</span></button>
+      <div class="or-divider" data-t="orText">या</div>
+      <div class="search-box">
+        <input type="text" id="cityInput" data-t-ph="cityPlaceholder" placeholder="अपना शहर/गांव लिखें">
+        <button onclick="fetchByCityName()" data-t="search">खोजें</button>
+      </div>
+
+      <div id="weatherLoading" class="weather-state hidden" data-t="loadingWeather">मौसम की जानकारी ला रहे हैं…</div>
+      <div id="weatherError" class="weather-state error hidden"></div>
+      <div id="weatherResult" class="weather-card hidden">
+        <div class="wc-header">
+          <h3 id="placeName">--</h3>
+          <span id="wIcon" class="wc-icon">🌤️</span>
+        </div>
+        <div class="wc-temp" id="wTemp">--°C</div>
+        <div class="wc-grid">
+          <div><span data-t="rainChance">बारिश</span>: <strong id="wRain">--%</strong></div>
+          <div><span data-t="humidity">नमी</span>: <strong id="wHumidity">--%</strong></div>
+          <div><span data-t="wind">हवा</span>: <strong id="wWind">-- km/h</strong></div>
+        </div>
+        <p id="weatherAdvice" class="wc-advice"></p>
+      </div>
+    </section>
+
+    <!-- Screen 4: Crop Selection -->
+    <section id="screen-crop" class="screen">
+      <h2 data-t="cropTitle">मेरी फसल चुनें</h2>
+      <div id="cropGrid" class="crop-grid"></div>
+      <div id="cropDetail" class="crop-detail hidden">
+        <h3 id="cropDetailName"></h3>
+        <div id="cropDetailTips"></div>
+      </div>
+    </section>
+
+    <!-- Screen 5: Tips -->
+    <section id="screen-tips" class="screen">
+      <h2 data-t="tipsTitle">आज की खेती की सलाह</h2>
+      <div id="tipsList"></div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-screen="home" onclick="goTo('home')">
+      <span>🏠</span><span data-t="navHome">होम</span>
+    </button>
+    <button class="nav-btn" data-screen="assistant" onclick="goTo('assistant')">
+      <span>🤖</span><span data-t="navAssistant">सहायक</span>
+    </button>
+    <button class="nav-btn" data-screen="weather" onclick="goTo('weather')">
+      <span>🌦️</span><span data-t="navWeather">मौसम</span>
+    </button>
+    <button class="nav-btn" data-screen="crop" onclick="goTo('crop')">
+      <span>🌱</span><span data-t="navCrop">फसल</span>
+    </button>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

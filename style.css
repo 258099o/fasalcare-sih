@@ -9,6 +9,7 @@ body {
   min-height: 100vh;
 }
 button { font-family: inherit; cursor: pointer; }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
 .hidden { display: none !important; }
 
 /* ===== Topbar ===== */
@@ -109,3 +110,18 @@ main { max-width: 520px; margin: 0 auto; padding: 16px; }
 .crop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
 .crop-item { background: #fff; border: 1px solid #DCE7D4; border-radius: 10px; padding: 12px; text-align: center; }
 .crop-item.selected { border-color: #2E7D32; background: #E8F5E9; }
+
+/* ===== Weather Loading / Error States (previously unstyled — now fixed) ===== */
+.weather-state {
+  margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13px;
+  background: #F1F8E9; color: #2E5E22; text-align: center; border: 1px solid #DCE7D4;
+}
+.weather-state.error {
+  background: #FDECEA; color: #C62828; border: 1px solid #F5C6C2; font-weight: 600;
+}
+
+/* ===== Weather condition/advice line (previously unstyled — now fixed) ===== */
+.wc-advice {
+  margin-top: 10px; font-size: 13px; color: #33691E; background: #F1F8E9;
+  padding: 8px 10px; border-radius: 8px; line-height: 1.4;
+}

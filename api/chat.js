@@ -1,22 +1,45 @@
 // api/chat.js — Secure Serverless Endpoint for Google Gemini
+//
+// Fixes applied:
+// - Default model updated: "gemini-1.5-flash" is a discontinued model and was
+//   causing every request to fail with a 404. Now defaults to a current,
+//   GA/stable, long-term-support Flash-Lite model. Override anytime with the
+//   GEMINI_MODEL environment variable if Google renames/replaces it later —
+//   check https://ai.google.dev/gemini-api/docs/models for the current list.
+// - generationConfig field name corrected: "response_mime_type" -> "responseMimeType"
+//   (the documented REST field), which was likely why JSON mode wasn't reliably
+//   enforced and Gemini sometimes wrapped output in markdown fences.
+// - Defensive JSON extraction (strips ```json fences) + schema validation, so a
+//   malformed AI response returns a clear INVALID_AI_RESPONSE error instead of
+//   crashing into a generic 500.
+// - Explicit handling for: missing/blocked candidates, request timeout, and
+//   missing/invalid request body.
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'METHOD_NOT_ALLOWED', message: 'Only POST is supported.' });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
   if (!apiKey) {
-    return res.status(500).json({ 
-      error: "MISSING_API_KEY", 
-      message: "Gemini API key is not configured in server environment." 
+    return res.status(500).json({
+      error: "MISSING_API_KEY",
+      message: "Gemini API key is not configured in server environment."
+    });
+  }
+
+  // ---- Basic request validation ----
+  const { farmerProfile, weatherContext, lang } = req.body || {};
+  if (!farmerProfile || typeof farmerProfile !== 'object' || !weatherContext || typeof weatherContext !== 'object') {
+    return res.status(400).json({
+      error: "INVALID_REQUEST",
+      message: "Request body must include farmerProfile and weatherContext objects."
     });
   }
 
   try {
-    const { farmerProfile, weatherContext, lang } = req.body;
-
     const systemPrompt = `
 You are FasalCare Farmer Assistant, a helpful and cautious agricultural decision-support expert for Indian smallholders.
 The current language is ${lang === 'hi' ? 'Hindi' : 'English'}.
@@ -29,7 +52,7 @@ CRITICAL RULES:
    - POSSIBLE EXPLANATIONS (never give a 100% definite diagnosis on vague symptoms)
    - RECOMMENDED ACTION
 4. Keep the language extremely simple, conversational, and respectful. Avoid difficult academic vocabulary.
-5. Return ONLY a valid JSON object matching the schema below without markdown backticks.
+5. Return ONLY a valid JSON object matching the schema below. Do not include markdown code fences, backticks, or any text outside the JSON object.
 
 REQUIRED JSON OUTPUT FORMAT:
 {
@@ -59,39 +82,93 @@ LOCATION & CURRENT WEATHER:
 - Location: ${weatherContext.place || 'Unknown'}
 - Air Temperature: ${weatherContext.temp ? weatherContext.temp + '°C' : 'Not provided'}
 - Air Humidity: ${weatherContext.humidity ? weatherContext.humidity + '%' : 'Not provided'}
-- Rain Probability: ${weatherContext.rainChance ? weatherContext.rainChance + '%' : 'Not provided'}
+- Rain Probability (today, not current rainfall): ${weatherContext.rainChance ? weatherContext.rainChance + '%' : 'Not provided'}
 - Wind Speed: ${weatherContext.wind ? weatherContext.wind + ' km/h' : 'Not provided'}
 `;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
-    const response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
-        ],
-        generationConfig: {
-          response_mime_type: "application/json",
-          temperature: 0.2
-        }
-      })
-    });
+    // ---- Timeout guard so a hung Gemini call can't hang the whole function ----
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s
+
+    let response;
+    try {
+      response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
+          ],
+          generationConfig: {
+            responseMimeType: "application/json", // FIX: was "response_mime_type" (wrong REST field name)
+            temperature: 0.2,
+            maxOutputTokens: 1024
+          }
+        }),
+        signal: controller.signal
+      });
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      if (fetchErr.name === 'AbortError') {
+        return res.status(504).json({ error: "TIMEOUT", message: "Gemini did not respond in time." });
+      }
+      return res.status(502).json({ error: "NETWORK_ERROR", message: fetchErr.message });
+    }
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errText = await response.text();
-      return res.status(response.status).json({ error: "GEMINI_ERROR", details: errText });
+      // Surface model-not-found / unsupported-model errors distinctly so the
+      // frontend can tell "AI temporarily busy" apart from "server misconfigured".
+      const isModelError = response.status === 404 || /model/i.test(errText);
+      return res.status(response.status).json({
+        error: isModelError ? "MODEL_ERROR" : "GEMINI_ERROR",
+        message: `Gemini request failed (status ${response.status}).`,
+        details: errText
+      });
     }
 
     const data = await response.json();
+
+    // Handle safety blocks / empty candidates cleanly instead of crashing on JSON.parse(undefined).
+    if (data.promptFeedback && data.promptFeedback.blockReason) {
+      return res.status(422).json({
+        error: "BLOCKED",
+        message: `Gemini blocked this request (${data.promptFeedback.blockReason}).`
+      });
+    }
+
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    // Parse JSON
-    const parsedData = JSON.parse(rawText);
+    if (!rawText) {
+      return res.status(502).json({ error: "NO_CONTENT", message: "Gemini returned no usable content." });
+    }
+
+    const parsedData = extractJSON(rawText);
+    if (!parsedData || typeof parsedData !== 'object' || !parsedData.summary || !Array.isArray(parsedData.actions)) {
+      return res.status(502).json({
+        error: "INVALID_AI_RESPONSE",
+        message: "Gemini response did not match the expected JSON schema."
+      });
+    }
+
     return res.status(200).json(parsedData);
 
   } catch (error) {
     return res.status(500).json({ error: "INTERNAL_ERROR", message: error.message });
+  }
+}
+
+// Strips accidental markdown code fences (```json ... ```) before parsing,
+// since JSON mode is not always perfectly honored by the model.
+function extractJSON(text) {
+  if (!text) return null;
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '');
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    return null;
   }
 }

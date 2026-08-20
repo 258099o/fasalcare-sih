@@ -10,6 +10,7 @@ body {
 }
 button { font-family: inherit; cursor: pointer; }
 button:disabled { opacity: 0.55; cursor: not-allowed; }
+a { color: inherit; }
 .hidden { display: none !important; }
 
 /* ===== Topbar ===== */
@@ -25,10 +26,13 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .lang-sep { color: #8FBC8F; font-size: 13px; }
 
 /* ===== Layout ===== */
-main { max-width: 520px; margin: 0 auto; padding: 16px; }
+main { max-width: 520px; margin: 0 auto; padding: 16px; overflow-x: hidden; }
 .screen { display: none; }
 .screen.active { display: block; animation: fadeIn .2s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.screen-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.btn-back { background: none; border: none; font-size: 14px; font-weight: 700; color: #2E7D32; padding: 6px 4px; }
 
 /* ===== Cards & Hero ===== */
 .hero-card { background: #E2F0D9; padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; }
@@ -49,11 +53,13 @@ main { max-width: 520px; margin: 0 auto; padding: 16px; }
 .btn {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; border: none;
+  text-decoration: none;
 }
 .btn-voice { background: #2E7D32; color: #fff; }
 .btn-type { background: #F1F8E9; color: #2E7D32; border: 1px solid #C8E6C9; }
 .btn-primary { background: #2E7D32; color: #fff; width: 100%; font-size: 15px; margin-top: 12px; }
 .btn-secondary { background: #E0E0E0; color: #333; width: 100%; margin-top: 14px; }
+.btn-location { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; width: 100%; margin-bottom: 10px; }
 
 /* ===== Navigation Menu Grid ===== */
 .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
@@ -86,7 +92,9 @@ main { max-width: 520px; margin: 0 auto; padding: 16px; }
 
 /* ===== Review & Analysis Result Cards ===== */
 .chat-review-box { margin: 16px; padding: 14px; background: #FAFDF7; border: 1px solid #C8E6C9; border-radius: 12px; }
-.review-item { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #EEF5E8; }
+.review-item { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #EEF5E8; }
+.review-item span { color: #556B2F; }
+.review-item strong { text-align: right; }
 .analysis-result { margin: 16px; padding: 16px; background: #ffffff; border: 2px solid #2E7D32; border-radius: 12px; }
 .summary-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .report-section { margin-bottom: 10px; }
@@ -107,11 +115,11 @@ main { max-width: 520px; margin: 0 auto; padding: 16px; }
 .wc-header { display: flex; justify-content: space-between; align-items: center; }
 .wc-temp { font-size: 32px; font-weight: 800; color: #2E7D32; margin: 6px 0; }
 .wc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; background: #F4F8F0; padding: 8px; border-radius: 8px; }
-.crop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+.crop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 4px; }
 .crop-item { background: #fff; border: 1px solid #DCE7D4; border-radius: 10px; padding: 12px; text-align: center; }
 .crop-item.selected { border-color: #2E7D32; background: #E8F5E9; }
 
-/* ===== Weather Loading / Error States (previously unstyled — now fixed) ===== */
+/* ===== Weather Loading / Error States ===== */
 .weather-state {
   margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13px;
   background: #F1F8E9; color: #2E5E22; text-align: center; border: 1px solid #DCE7D4;
@@ -119,9 +127,75 @@ main { max-width: 520px; margin: 0 auto; padding: 16px; }
 .weather-state.error {
   background: #FDECEA; color: #C62828; border: 1px solid #F5C6C2; font-weight: 600;
 }
-
-/* ===== Weather condition/advice line (previously unstyled — now fixed) ===== */
 .wc-advice {
   margin-top: 10px; font-size: 13px; color: #33691E; background: #F1F8E9;
   padding: 8px 10px; border-radius: 8px; line-height: 1.4;
 }
+
+/* ===== 5–7 Day Forecast (no horizontal scroll — stacked rows) ===== */
+.forecast-section { margin-top: 18px; }
+.forecast-section h3 { font-size: 15px; color: #2E5E22; margin-bottom: 8px; }
+.forecast-list { display: flex; flex-direction: column; gap: 6px; }
+.forecast-row {
+  display: grid; grid-template-columns: 46px 34px 1fr auto;
+  align-items: center; gap: 8px; background: #fff; border: 1px solid #DCE7D4;
+  border-radius: 10px; padding: 8px 12px; font-size: 13px;
+}
+.fr-day { font-weight: 700; color: #2E5E22; }
+.fr-icon { font-size: 18px; text-align: center; }
+.fr-temp { color: #333; }
+.fr-rain { color: #1565C0; font-weight: 600; white-space: nowrap; }
+
+/* ===== My Farm: generic section card ===== */
+.section-card {
+  background: #fff; border: 1px solid #DCE7D4; border-radius: 14px;
+  padding: 16px; margin-bottom: 14px;
+}
+.section-card h3 { font-size: 15px; color: #1B2A14; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.section-hint { font-size: 12px; color: #708061; margin-bottom: 10px; line-height: 1.4; }
+
+.brief-card { border: 2px solid #388E3C; background: #F8FCF5; }
+.brief-content .report-section { margin-bottom: 8px; }
+.brief-content .muted { color: #708061; font-size: 13px; }
+.brief-content .muted.small { font-size: 11px; margin-top: 6px; }
+
+/* ===== Soil Health form ===== */
+.soil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.soil-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #556B2F; font-weight: 600; }
+.soil-field-wide { grid-column: 1 / -1; }
+.soil-field input {
+  padding: 9px 10px; border: 1px solid #DCE7D4; border-radius: 8px; font-size: 14px; outline: none;
+  font-family: inherit;
+}
+
+/* ===== Government Schemes ===== */
+.schemes-list { display: flex; flex-direction: column; gap: 10px; }
+.scheme-card { border: 1px solid #DCE7D4; border-radius: 10px; padding: 12px; background: #FAFDF7; }
+.scheme-card h4 { font-size: 14px; color: #2E5E22; margin-bottom: 4px; }
+.scheme-card p { font-size: 12px; color: #556B2F; margin-bottom: 8px; line-height: 1.4; }
+.scheme-card .scheme-tag {
+  display: inline-block; font-size: 10px; font-weight: 700; color: #E65100;
+  background: #FFF3E0; padding: 2px 6px; border-radius: 5px; margin-bottom: 6px;
+}
+.scheme-link { display: inline-flex; font-size: 12px; padding: 8px 12px; }
+
+/* ===== Market Prices ===== */
+.market-card { border: 1px dashed #C8E6C9; border-radius: 10px; padding: 12px; background: #FAFDF7; }
+.market-card p { font-size: 13px; color: #556B2F; margin-bottom: 10px; line-height: 1.4; }
+.market-link { display: inline-flex; width: auto; }
+
+/* ===== Alerts ===== */
+.alerts-list { display: flex; flex-direction: column; gap: 8px; }
+.alert-item {
+  display: flex; gap: 10px; align-items: flex-start; background: #FFF8E1;
+  border: 1px solid #FFECB3; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #5D4037;
+}
+.alert-item .alert-icon { font-size: 16px; }
+.alerts-empty { font-size: 13px; color: #708061; }
+
+/* ===== Tips ===== */
+.tip-item {
+  background: #fff; border: 1px solid #DCE7D4; border-radius: 10px;
+  padding: 12px; margin-bottom: 10px; font-size: 13px; color: #333;
+}
+.tip-item strong { display: block; color: #2E5E22; margin-bottom: 3px; font-size: 14px; }

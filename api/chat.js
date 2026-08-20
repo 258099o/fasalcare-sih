@@ -1,19 +1,16 @@
 // api/chat.js — Secure Serverless Endpoint for Google Gemini
 //
-// Fixes applied:
 // - Default model updated: "gemini-1.5-flash" is a discontinued model and was
-//   causing every request to fail with a 404. Now defaults to a current,
-//   GA/stable, long-term-support Flash-Lite model. Override anytime with the
-//   GEMINI_MODEL environment variable if Google renames/replaces it later —
-//   check https://ai.google.dev/gemini-api/docs/models for the current list.
+//   causing every request to fail. Now defaults to a current, GA/stable,
+//   long-term-support Flash-Lite model. Override anytime with the GEMINI_MODEL
+//   environment variable if Google renames/replaces it later — check
+//   https://ai.google.dev/gemini-api/docs/models for the current list.
 // - generationConfig field name corrected: "response_mime_type" -> "responseMimeType"
-//   (the documented REST field), which was likely why JSON mode wasn't reliably
-//   enforced and Gemini sometimes wrapped output in markdown fences.
-// - Defensive JSON extraction (strips ```json fences) + schema validation, so a
-//   malformed AI response returns a clear INVALID_AI_RESPONSE error instead of
-//   crashing into a generic 500.
-// - Explicit handling for: missing/blocked candidates, request timeout, and
-//   missing/invalid request body.
+//   (the documented REST field name).
+// - Defensive JSON extraction (strips ```json fences) + schema validation.
+// - Explicit handling for missing/blocked candidates, timeout, and invalid body.
+// - Optional soilHealth context: only included in the prompt if the farmer
+//   actually entered at least one value — never invented.
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -31,7 +28,7 @@ export default async function handler(req, res) {
   }
 
   // ---- Basic request validation ----
-  const { farmerProfile, weatherContext, lang } = req.body || {};
+  const { farmerProfile, weatherContext, lang, soilHealth } = req.body || {};
   if (!farmerProfile || typeof farmerProfile !== 'object' || !weatherContext || typeof weatherContext !== 'object') {
     return res.status(400).json({
       error: "INVALID_REQUEST",
@@ -45,14 +42,15 @@ You are FasalCare Farmer Assistant, a helpful and cautious agricultural decision
 The current language is ${lang === 'hi' ? 'Hindi' : 'English'}.
 
 CRITICAL RULES:
-1. Use ONLY the provided information. Do NOT invent missing measurements, soil moisture percentages, exact disease diagnoses, or imaginary facts.
+1. Use ONLY the provided information. Do NOT invent missing measurements, soil moisture percentages, exact disease diagnoses, fertilizer dosages, or imaginary facts.
 2. If an attribute is "Not provided", explicitly treat it as unknown (e.g., "मिट्टी की वास्तविक नमी की जानकारी उपलब्ध नहीं है").
 3. Distinguish clearly between:
    - KNOWN FACTS (from farmer input and weather data)
-   - POSSIBLE EXPLANATIONS (never give a 100% definite diagnosis on vague symptoms)
+   - POSSIBLE EXPLANATIONS (never give a 100% definite diagnosis on vague symptoms — use wording like "possible cause", "may indicate", "consider consulting an agriculture expert")
    - RECOMMENDED ACTION
 4. Keep the language extremely simple, conversational, and respectful. Avoid difficult academic vocabulary.
-5. Return ONLY a valid JSON object matching the schema below. Do not include markdown code fences, backticks, or any text outside the JSON object.
+5. If soil test values are provided below, you may briefly explain what they generally mean in simple terms, but do NOT prescribe precise fertilizer quantities or dosages — recommend the farmer consult a local agriculture officer or Krishi Vigyan Kendra (KVK) for exact dosing.
+6. Return ONLY a valid JSON object matching the schema below. Do not include markdown code fences, backticks, or any text outside the JSON object.
 
 REQUIRED JSON OUTPUT FORMAT:
 {
@@ -69,6 +67,8 @@ REQUIRED JSON OUTPUT FORMAT:
 }
 `;
 
+    const soilBlock = buildSoilBlock(soilHealth);
+
     const userPrompt = `
 FARMER INFORMATION:
 - Crop: ${farmerProfile.crop || 'Not provided'}
@@ -77,7 +77,7 @@ FARMER INFORMATION:
 - Last Irrigation: ${farmerProfile.lastIrrigation || 'Not provided'}
 - Observed Issue: ${farmerProfile.problem || 'Not provided'}
 - Additional Notes: ${farmerProfile.additional || 'None'}
-
+${soilBlock}
 LOCATION & CURRENT WEATHER:
 - Location: ${weatherContext.place || 'Unknown'}
 - Air Temperature: ${weatherContext.temp ? weatherContext.temp + '°C' : 'Not provided'}
@@ -102,7 +102,7 @@ LOCATION & CURRENT WEATHER:
             { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
           ],
           generationConfig: {
-            responseMimeType: "application/json", // FIX: was "response_mime_type" (wrong REST field name)
+            responseMimeType: "application/json", // was "response_mime_type" (wrong REST field name)
             temperature: 0.2,
             maxOutputTokens: 1024
           }
@@ -120,8 +120,6 @@ LOCATION & CURRENT WEATHER:
 
     if (!response.ok) {
       const errText = await response.text();
-      // Surface model-not-found / unsupported-model errors distinctly so the
-      // frontend can tell "AI temporarily busy" apart from "server misconfigured".
       const isModelError = response.status === 404 || /model/i.test(errText);
       return res.status(response.status).json({
         error: isModelError ? "MODEL_ERROR" : "GEMINI_ERROR",
@@ -132,7 +130,6 @@ LOCATION & CURRENT WEATHER:
 
     const data = await response.json();
 
-    // Handle safety blocks / empty candidates cleanly instead of crashing on JSON.parse(undefined).
     if (data.promptFeedback && data.promptFeedback.blockReason) {
       return res.status(422).json({
         error: "BLOCKED",
@@ -160,6 +157,24 @@ LOCATION & CURRENT WEATHER:
   }
 }
 
+// Only adds a soil-test block to the prompt if the farmer actually entered
+// at least one value — we never invent or assume soil readings.
+function buildSoilBlock(soilHealth) {
+  if (!soilHealth || typeof soilHealth !== 'object') return '';
+  const fields = [
+    ['pH', soilHealth.ph],
+    ['Nitrogen (N)', soilHealth.nitrogen],
+    ['Phosphorus (P)', soilHealth.phosphorus],
+    ['Potassium (K)', soilHealth.potassium],
+    ['Organic Carbon (%)', soilHealth.organicCarbon]
+  ].filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '');
+
+  if (fields.length === 0) return '';
+
+  const lines = fields.map(([label, v]) => `- ${label}: ${v}`).join('\n');
+  return `\nSOIL TEST VALUES (farmer-provided, optional):\n${lines}\n`;
+}
+
 // Strips accidental markdown code fences (```json ... ```) before parsing,
 // since JSON mode is not always perfectly honored by the model.
 function extractJSON(text) {
@@ -171,4 +186,4 @@ function extractJSON(text) {
   } catch (e) {
     return null;
   }
-}
+                                   }

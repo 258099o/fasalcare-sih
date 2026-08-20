@@ -31,7 +31,7 @@
         <div id="snapCrop"></div>
       </div>
 
-      <!-- NEW PROMINENT FEATURE: Farmer Assistant Card -->
+      <!-- Farmer Assistant Card -->
       <div class="assistant-hero-card">
         <div class="ahc-badge">🤖 AI Assistant</div>
         <h2 data-t="assistantCardTitle">मेरी खेती के बारे में पूछें</h2>
@@ -52,9 +52,9 @@
           <span class="cb-icon">🌦️</span>
           <span class="cb-text" data-t="cardWeather">आज का मौसम</span>
         </button>
-        <button class="card-btn" onclick="goTo('crop')">
+        <button class="card-btn" onclick="goTo('farm')">
           <span class="cb-icon">🌱</span>
-          <span class="cb-text" data-t="cardCrop">मेरी फसल</span>
+          <span class="cb-text" data-t="cardCrop">मेरा फार्म</span>
         </button>
         <button class="card-btn" onclick="goTo('tips')">
           <span class="cb-icon">💡</span>
@@ -70,16 +70,10 @@
         <h2 data-t="assistantHeader">FasalCare सहायक</h2>
       </div>
 
-      <!-- Conversation Container -->
       <div class="chat-container">
-        <div id="chatMessages" class="chat-messages">
-          <!-- Dynamically populated messages -->
-        </div>
-
-        <!-- Quick Response Chips (Options / Skip) -->
+        <div id="chatMessages" class="chat-messages"></div>
         <div id="chatQuickOptions" class="quick-options"></div>
 
-        <!-- Review Profile View (Appears after questions) -->
         <div id="chatReviewBox" class="chat-review-box hidden">
           <h3 data-t="reviewTitle">आपकी जानकारी</h3>
           <div id="reviewDetails" class="review-details"></div>
@@ -88,7 +82,6 @@
           </button>
         </div>
 
-        <!-- Analysis Result Dashboard -->
         <div id="analysisResult" class="analysis-result hidden">
           <div class="summary-header">
             <h3>🌾 <span data-t="summaryTitle">FasalCare विश्लेषण रिपोर्ट</span></h3>
@@ -99,7 +92,6 @@
         </div>
       </div>
 
-      <!-- Bottom Chat Input Bar -->
       <div id="chatInputBar" class="chat-input-bar">
         <button id="btnChatMic" class="btn-icon" onclick="startChatVoice()">🎙️</button>
         <input type="text" id="chatInput" data-t-ph="typeAnswer" placeholder="अपना जवाब लिखें...">
@@ -107,7 +99,7 @@
       </div>
     </section>
 
-    <!-- Screen 3: Weather -->
+    <!-- Screen 3: Weather (Today + Forecast) -->
     <section id="screen-weather" class="screen">
       <h2 data-t="weatherTitle">आज का मौसम</h2>
       <button class="btn btn-location" onclick="fetchByGPS()">📍 <span data-t="useLocation">मेरा स्थान बताएं</span></button>
@@ -119,6 +111,7 @@
 
       <div id="weatherLoading" class="weather-state hidden" data-t="loadingWeather">मौसम की जानकारी ला रहे हैं…</div>
       <div id="weatherError" class="weather-state error hidden"></div>
+
       <div id="weatherResult" class="weather-card hidden">
         <div class="wc-header">
           <h3 id="placeName">--</h3>
@@ -126,21 +119,97 @@
         </div>
         <div class="wc-temp" id="wTemp">--°C</div>
         <div class="wc-grid">
-          <div><span data-t="rainChance">बारिश</span>: <strong id="wRain">--%</strong></div>
+          <div><span data-t="rainChance">बारिश की संभावना</span>: <strong id="wRain">--%</strong></div>
           <div><span data-t="humidity">नमी</span>: <strong id="wHumidity">--%</strong></div>
           <div><span data-t="wind">हवा</span>: <strong id="wWind">-- km/h</strong></div>
         </div>
         <p id="weatherAdvice" class="wc-advice"></p>
       </div>
+
+      <div id="forecastSection" class="forecast-section hidden">
+        <h3 data-t="forecastTitle">अगले दिनों का पूर्वानुमान</h3>
+        <div id="forecastList" class="forecast-list"></div>
+      </div>
     </section>
 
-    <!-- Screen 4: Crop Selection -->
-    <section id="screen-crop" class="screen">
-      <h2 data-t="cropTitle">मेरी फसल चुनें</h2>
-      <div id="cropGrid" class="crop-grid"></div>
-      <div id="cropDetail" class="crop-detail hidden">
-        <h3 id="cropDetailName"></h3>
-        <div id="cropDetailTips"></div>
+    <!-- Screen 4: My Farm (Dashboard + Crop + Soil + Schemes + Market + Alerts) -->
+    <section id="screen-farm" class="screen">
+      <h2 data-t="farmTitle">मेरा फार्म</h2>
+
+      <!-- Today's Farm Brief -->
+      <div class="section-card brief-card">
+        <h3>🌾 <span data-t="briefTitle">आज की फार्म संक्षिप्त जानकारी</span></h3>
+        <div id="farmBriefContent" class="brief-content"></div>
+      </div>
+
+      <!-- Farm Dashboard -->
+      <div class="section-card">
+        <h3>📋 <span data-t="dashTitle">मेरा फार्म — जानकारी</span></h3>
+        <div id="dashboardDetails" class="review-details"></div>
+      </div>
+
+      <div class="section-card">
+        <h3>📊 <span data-t="statusTitle">आज की स्थिति</span></h3>
+        <div id="dashboardStatus" class="review-details"></div>
+      </div>
+
+      <!-- Update / Select Crop -->
+      <div class="section-card">
+        <h3>🌱 <span data-t="cropTitle">मेरी फसल चुनें</span></h3>
+        <div id="cropGrid" class="crop-grid"></div>
+      </div>
+
+      <!-- Soil Health -->
+      <div class="section-card">
+        <h3>🟤 <span data-t="soilTitle">मिट्टी स्वास्थ्य (वैकल्पिक)</span></h3>
+        <p class="section-hint" data-t="soilHint">अगर आपको ये मान पता नहीं हैं तो खाली छोड़ दें।</p>
+        <div class="soil-grid">
+          <label class="soil-field">
+            <span data-t="soilPh">pH</span>
+            <input type="number" step="0.1" id="soilPh" inputmode="decimal">
+          </label>
+          <label class="soil-field">
+            <span data-t="soilN">नाइट्रोजन (N)</span>
+            <input type="number" step="1" id="soilN" inputmode="decimal">
+          </label>
+          <label class="soil-field">
+            <span data-t="soilP">फॉस्फोरस (P)</span>
+            <input type="number" step="1" id="soilP" inputmode="decimal">
+          </label>
+          <label class="soil-field">
+            <span data-t="soilK">पोटैशियम (K)</span>
+            <input type="number" step="1" id="soilK" inputmode="decimal">
+          </label>
+          <label class="soil-field soil-field-wide">
+            <span data-t="soilOc">जैविक कार्बन (Organic Carbon %)</span>
+            <input type="number" step="0.1" id="soilOc" inputmode="decimal">
+          </label>
+        </div>
+        <p class="section-hint" data-t="soilNote">यह जानकारी अगली AI सलाह में शामिल की जाएगी।</p>
+      </div>
+
+      <!-- Government Schemes -->
+      <div class="section-card">
+        <h3>🏛️ <span data-t="schemesTitle">सरकारी योजनाएं</span></h3>
+        <p class="section-hint" data-t="schemesHint">यह सूची केवल जानकारी के लिए है। पात्रता आधिकारिक वेबसाइट पर जांचें।</p>
+        <div id="schemesList" class="schemes-list"></div>
+      </div>
+
+      <!-- Market Prices -->
+      <div class="section-card">
+        <h3>📈 <span data-t="marketTitle">मंडी भाव</span></h3>
+        <div class="market-card">
+          <p data-t="marketPrototype">मंडी भाव एकीकरण — प्रोटोटाइप चरण। वास्तविक/लाइव कीमतें अभी इस डेमो में उपलब्ध नहीं हैं।</p>
+          <a class="btn btn-type market-link" href="https://agmarknet.gov.in/" target="_blank" rel="noopener noreferrer">
+            🔗 <span data-t="marketOfficial">आधिकारिक मंडी भाव देखें (Agmarknet)</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="section-card">
+        <h3>🔔 <span data-t="alertsTitle">फार्म अलर्ट</span></h3>
+        <div id="alertsList" class="alerts-list"></div>
       </div>
     </section>
 
@@ -162,11 +231,12 @@
     <button class="nav-btn" data-screen="weather" onclick="goTo('weather')">
       <span>🌦️</span><span data-t="navWeather">मौसम</span>
     </button>
-    <button class="nav-btn" data-screen="crop" onclick="goTo('crop')">
-      <span>🌱</span><span data-t="navCrop">फसल</span>
+    <button class="nav-btn" data-screen="farm" onclick="goTo('farm')">
+      <span>🌱</span><span data-t="navFarm">मेरा फार्म</span>
     </button>
   </nav>
 
   <script src="script.js"></script>
 </body>
-</html>
+              </html>
+              

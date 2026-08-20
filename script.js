@@ -1,13 +1,16 @@
 /* =========================================================
    FasalCare — script.js
-   Full Conversational AI Assistant + Open-Meteo Integration
+   Conversational AI Assistant + Open-Meteo Integration
+   + My Farm Dashboard + Schemes + Soil Health + Market Prices
+   + Alerts + 7-Day Forecast + Today's Farm Brief
+   + localStorage persistence (no backend database)
 ========================================================= */
 
 const T = {
   hi: {
     tagline: "आपकी खेती की आसान डिजिटल मदद",
-    cardWeather: "आज का मौसम", cardCrop: "मेरी फसल", cardTips: "खेती की सलाह",
-    navHome: "होम", navAssistant: "सहायक", navWeather: "मौसम", navCrop: "फसल", navTips: "सलाह",
+    cardWeather: "आज का मौसम", cardCrop: "मेरा फार्म", cardTips: "खेती की सलाह",
+    navHome: "होम", navAssistant: "सहायक", navWeather: "मौसम", navFarm: "मेरा फार्म",
     assistantCardTitle: "मेरी खेती के बारे में पूछें",
     assistantCardSubtitle: "अपने खेत की स्थिति बताएं और तुरंत विशेषज्ञ सलाह पाएं",
     btnSpeak: "बोलकर बताएं", btnType: "लिखकर बताएं",
@@ -18,11 +21,52 @@ const T = {
     btnAnalyzing: "विश्लेषण कर रहे हैं...",
     summaryTitle: "FasalCare विश्लेषण रिपोर्ट",
     listen: "सुनें", btnRestart: "🔄 नई जानकारी पूछें",
+
     weatherTitle: "आज का मौसम", useLocation: "📍 मेरा स्थान बताएं", orText: "या",
     cityPlaceholder: "अपना शहर/गांव लिखें", search: "खोजें",
     loadingWeather: "मौसम की जानकारी ला रहे हैं…",
     rainChance: "बारिश की संभावना",
-    humidity: "नमी", wind: "हवा", cropTitle: "मेरी फसल चुनें", tipsTitle: "आज की खेती की सलाह",
+    humidity: "नमी", wind: "हवा",
+    forecastTitle: "अगले दिनों का पूर्वानुमान",
+
+    cropTitle: "मेरी फसल चुनें",
+    tipsTitle: "आज की खेती की सलाह",
+
+    farmTitle: "मेरा फार्म",
+    briefTitle: "आज की फार्म संक्षिप्त जानकारी",
+    briefNoProfile: "पहले सहायक के साथ अपनी फसल की जानकारी भरें, फिर यहां संक्षिप्त जानकारी दिखेगी।",
+    briefCropOk: "कोई विशेष समस्या दर्ज नहीं की गई।",
+    briefPriorities: "आज की प्राथमिकताएं",
+    briefAllGood: "अभी कोई विशेष चेतावनी नहीं है — सामान्य देखभाल जारी रखें।",
+    briefRunAssistant: "AI सहायक से पूरा विश्लेषण पाएं",
+    briefFromAnalysis: "यह जानकारी आपके पिछले AI विश्लेषण पर आधारित है।",
+
+    dashTitle: "मेरा फार्म — जानकारी",
+    dashCrop: "फसल", dashCropAge: "फसल की उम्र", dashLocation: "स्थान",
+    dashSoil: "मिट्टी", dashIrrigation: "आखिरी सिंचाई",
+
+    statusTitle: "आज की स्थिति",
+    statusWeather: "मौसम की स्थिति", statusWater: "पानी की सलाह",
+    statusCrop: "फसल की स्थिति", statusAlerts: "सक्रिय अलर्ट",
+
+    soilTitle: "मिट्टी स्वास्थ्य (वैकल्पिक)",
+    soilHint: "अगर आपको ये मान पता नहीं हैं तो खाली छोड़ दें।",
+    soilPh: "pH", soilN: "नाइट्रोजन (N)", soilP: "फॉस्फोरस (P)",
+    soilK: "पोटैशियम (K)", soilOc: "जैविक कार्बन (%)",
+    soilNote: "यह जानकारी अगली AI सलाह में शामिल की जाएगी।",
+
+    schemesTitle: "सरकारी योजनाएं",
+    schemesHint: "यह सूची केवल जानकारी के लिए है। पात्रता आधिकारिक वेबसाइट पर जांचें।",
+    schemesTag: "आप पर लागू हो सकती है",
+    schemesCheck: "आधिकारिक पात्रता जांचें",
+
+    marketTitle: "मंडी भाव",
+    marketPrototype: "मंडी भाव एकीकरण — प्रोटोटाइप चरण। वास्तविक/लाइव कीमतें अभी इस डेमो में उपलब्ध नहीं हैं।",
+    marketOfficial: "आधिकारिक मंडी भाव देखें (Agmarknet)",
+
+    alertsTitle: "फार्म अलर्ट",
+    alertsEmpty: "अभी कोई अलर्ट नहीं है।",
+
     errWeather: "मौसम की जानकारी उपलब्ध नहीं है। कृपया पुनः प्रयास करें।",
     errCityNotFound: "शहर नहीं मिला। कृपया नाम जांचकर फिर से लिखें।",
     errGeneric: "कुछ गड़बड़ हो गई। कृपया पुनः प्रयास करें।",
@@ -33,8 +77,8 @@ const T = {
   },
   en: {
     tagline: "Simple digital help for your farming",
-    cardWeather: "Today's Weather", cardCrop: "My Crop", cardTips: "Crop Tips",
-    navHome: "Home", navAssistant: "Assistant", navWeather: "Weather", navCrop: "Crop", navTips: "Tips",
+    cardWeather: "Today's Weather", cardCrop: "My Farm", cardTips: "Crop Tips",
+    navHome: "Home", navAssistant: "Assistant", navWeather: "Weather", navFarm: "My Farm",
     assistantCardTitle: "Tell FasalCare about your farm",
     assistantCardSubtitle: "Share your field condition to get personalized advice",
     btnSpeak: "Ask by Voice", btnType: "Type Details",
@@ -45,11 +89,52 @@ const T = {
     btnAnalyzing: "Analyzing your farm...",
     summaryTitle: "FasalCare Analysis Report",
     listen: "Listen", btnRestart: "🔄 Start New Assessment",
+
     weatherTitle: "Today's Weather", useLocation: "📍 Use My Location", orText: "or",
     cityPlaceholder: "Enter your city/village", search: "Search",
     loadingWeather: "Fetching weather…",
     rainChance: "Rain chance today",
-    humidity: "Humidity", wind: "Wind", cropTitle: "Select Your Crop", tipsTitle: "Today's Crop Tips",
+    humidity: "Humidity", wind: "Wind",
+    forecastTitle: "Upcoming Days Forecast",
+
+    cropTitle: "Select Your Crop",
+    tipsTitle: "Today's Crop Tips",
+
+    farmTitle: "My Farm",
+    briefTitle: "Today's Farm Brief",
+    briefNoProfile: "Fill in your crop details with the Assistant first, and your brief will appear here.",
+    briefCropOk: "No specific problem reported.",
+    briefPriorities: "Today's priorities",
+    briefAllGood: "No specific warnings right now — continue regular care.",
+    briefRunAssistant: "Get a full AI analysis",
+    briefFromAnalysis: "This is based on your last AI analysis.",
+
+    dashTitle: "My Farm — Details",
+    dashCrop: "Crop", dashCropAge: "Crop Age", dashLocation: "Location",
+    dashSoil: "Soil Type", dashIrrigation: "Last Irrigation",
+
+    statusTitle: "Today's Status",
+    statusWeather: "Weather status", statusWater: "Water advice",
+    statusCrop: "Crop condition", statusAlerts: "Active alerts",
+
+    soilTitle: "Soil Health (optional)",
+    soilHint: "Leave blank if you don't know these values.",
+    soilPh: "pH", soilN: "Nitrogen (N)", soilP: "Phosphorus (P)",
+    soilK: "Potassium (K)", soilOc: "Organic Carbon (%)",
+    soilNote: "This will be included in your next AI analysis.",
+
+    schemesTitle: "Government Schemes",
+    schemesHint: "This list is for information only. Check eligibility on the official website.",
+    schemesTag: "May be relevant to you",
+    schemesCheck: "Check official eligibility",
+
+    marketTitle: "Market Prices",
+    marketPrototype: "Market price integration — prototype stage. Real/live prices are not available in this demo yet.",
+    marketOfficial: "View official mandi prices (Agmarknet)",
+
+    alertsTitle: "Farm Alerts",
+    alertsEmpty: "No alerts right now.",
+
     errWeather: "Weather information unavailable. Please try again.",
     errCityNotFound: "City not found. Please check the spelling and try again.",
     errGeneric: "Something went wrong. Please try again.",
@@ -61,8 +146,9 @@ const T = {
 };
 
 let currentLang = "hi";
-let currentWeather = null;
-let selectedCrop = null;
+let currentWeather = null;      // today's weather snapshot
+let currentForecast = null;     // { time:[], weather_code:[], temperature_2m_max:[], temperature_2m_min:[], precipitation_probability_max:[] }
+let lastAnalysis = null;        // last successful Gemini report (or null)
 
 /* ---------- CHATBOT CONVERSATION STATE ---------- */
 let currentStep = 0;
@@ -77,6 +163,10 @@ let farmerProfile = {
   lastIrrigation: "",
   problem: "",
   additional: ""
+};
+
+let soilHealth = {
+  ph: "", nitrogen: "", phosphorus: "", potassium: "", organicCarbon: ""
 };
 
 const QUESTIONS = [
@@ -142,6 +232,34 @@ const SKIP_WORDS = [
   "Skip", "skip", "SKIP", "unknown", "Unknown", "n/a", "N/A", "na", "NA"
 ];
 
+// Phrases that mean "everything looks fine" (used by Alerts / Farm Brief to avoid false alarms)
+const NO_ISSUE_PHRASES = ["सब ठीक है", "Everything looks healthy"];
+const OLD_IRRIGATION_HINTS = ["1 हफ्ता पहले", "1 week ago"];
+
+/* =========================================================
+   LOCAL STORAGE (prototype-level persistence, no backend DB)
+========================================================= */
+const STORAGE_KEY = "fasalcare_state_v1";
+
+function loadStoredState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    return {}; // localStorage unavailable (private mode, etc.) — fail silently
+  }
+}
+
+function saveStoredState(partial) {
+  try {
+    const current = loadStoredState();
+    const merged = Object.assign({}, current, partial);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+  } catch (e) {
+    // storage full or unavailable — not critical, app still works this session
+  }
+}
+
 /* ---------- LANGUAGE & SCREEN NAVIGATION ---------- */
 function setLanguage(lang) {
   currentLang = lang;
@@ -159,7 +277,15 @@ function setLanguage(lang) {
   });
 
   if (currentWeather) renderWeather();
+  if (currentForecast) renderForecast(currentForecast);
   renderCropGrid();
+  renderSchemes();
+  renderTips();
+  renderFarmDashboard();
+  renderFarmBrief();
+  renderAlerts();
+
+  saveStoredState({ lang });
 }
 
 function tr(key) { return T[currentLang][key] || key; }
@@ -171,6 +297,13 @@ function goTo(screen) {
   document.querySelectorAll(".nav-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.screen === screen);
   });
+
+  // Refresh "My Farm" screen every time it's opened, since weather/analysis may have changed.
+  if (screen === "farm") {
+    renderFarmDashboard();
+    renderFarmBrief();
+    renderAlerts();
+  }
 }
 
 /* ---------- Basic HTML escaping for any text we inject via innerHTML ---------- */
@@ -187,7 +320,7 @@ function escapeHTML(str) {
 /* ---------- CONVERSATIONAL ASSISTANT FLOW ---------- */
 
 // mode: 'voice' | 'text'
-// presetCrop: optional crop name already chosen on the Crop screen — must survive the reset below.
+// presetCrop: optional crop name already chosen on the My Farm screen — must survive the reset below.
 function startAssistant(mode, presetCrop) {
   goTo('assistant');
   restartAssistant(presetCrop);
@@ -209,9 +342,7 @@ function restartAssistant(presetCrop) {
   document.getElementById("chatInputBar").classList.remove("hidden");
   setChatInputEnabled(true);
 
-  // BUG FIX: previously, selecting a crop on the Crop screen and then opening the
-  // assistant reset farmerProfile.crop back to "". We now re-apply the preset crop
-  // AFTER the reset, and skip straight past the "which crop" question.
+  // Re-apply preset crop AFTER the reset above, and skip straight past the "which crop" question.
   if (presetCrop) {
     farmerProfile.crop = presetCrop;
     addMessage("bot", QUESTIONS[0][currentLang]);
@@ -256,7 +387,7 @@ function renderQuickOptions(options) {
 }
 
 /* Enable/disable all chat inputs while a response is being processed,
-   to prevent duplicate/empty submissions (Bug: duplicate/empty submissions). */
+   to prevent duplicate/empty submissions. */
 function setChatInputEnabled(enabled) {
   const chatInput = document.getElementById("chatInput");
   const sendBtn = document.getElementById("btnChatSend");
@@ -314,6 +445,13 @@ function showReviewBox() {
     <div class="review-item"><span>💧 ${currentLang === 'hi' ? 'आखिरी सिंचाई' : 'Last Irrigation'}:</span> <strong>${escapeHTML(farmerProfile.lastIrrigation)}</strong></div>
     <div class="review-item"><span>⚠️ ${currentLang === 'hi' ? 'समस्या' : 'Problem'}:</span> <strong>${escapeHTML(farmerProfile.problem)}</strong></div>
   `;
+
+  // Persist as soon as the profile is complete, so My Farm reflects it even
+  // if the farmer never clicks "Analyze".
+  saveStoredState({ farmerProfile });
+  renderFarmDashboard();
+  renderFarmBrief();
+  renderAlerts();
 }
 
 /* ---------- GEMINI API DISPATCH & FALLBACK ---------- */
@@ -333,6 +471,10 @@ async function submitToGemini() {
     wind: null
   };
 
+  // Only send soil health data if the farmer actually entered something —
+  // never invent readings.
+  const soilPayload = hasAnySoilValue() ? soilHealth : null;
+
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -340,12 +482,11 @@ async function submitToGemini() {
       body: JSON.stringify({
         farmerProfile,
         weatherContext,
+        soilHealth: soilPayload,
         lang: currentLang
       })
     });
 
-    // Try to read the JSON body regardless of status, so we can see the
-    // structured error code the server sends back (Bug: couldn't tell error types apart).
     let payload = null;
     try {
       payload = await response.json();
@@ -356,13 +497,11 @@ async function submitToGemini() {
     if (!response.ok || !payload || payload.error) {
       const errCode = (payload && payload.error) ? payload.error : "UNKNOWN";
       console.warn("FasalCare: /api/chat failed —", errCode, payload && payload.message);
-
       const isConfigIssue = (errCode === "MISSING_API_KEY" || errCode === "MODEL_ERROR");
       renderFallbackAnalysis(isConfigIssue ? "config" : "network");
       return;
     }
 
-    // Defensive schema check even on a 200 response.
     if (!payload.summary || !Array.isArray(payload.actions)) {
       console.warn("FasalCare: /api/chat returned an incomplete report", payload);
       renderFallbackAnalysis("invalid");
@@ -370,6 +509,11 @@ async function submitToGemini() {
     }
 
     renderAnalysisResult(payload, false);
+    lastAnalysis = Object.assign({}, payload, { generatedAt: Date.now() });
+    saveStoredState({ lastAnalysis });
+    renderFarmDashboard();
+    renderFarmBrief();
+    renderAlerts();
 
   } catch (error) {
     console.warn("FasalCare: Gemini call threw an error, falling back to local guidance:", error);
@@ -390,300 +534,4 @@ function renderAnalysisResult(data, isFallback, fallbackReason) {
   const actionsList = (data.actions || []).map(a => `<li>${escapeHTML(a)}</li>`).join("");
 
   let bannerText = "";
-  if (isFallback) {
-    bannerText = fallbackReason === "config" ? tr("errAIConfig") : tr("errAIUnavailable");
-  }
-
-  body.innerHTML = `
-    ${isFallback ? `<div style="color:#D32F2F; font-size:12px; margin-bottom:8px;">⚠️ ${escapeHTML(bannerText)}</div>` : ''}
-    <div class="report-section">
-      <h4>🌱 ${currentLang === 'hi' ? 'फसल की स्थिति' : 'Crop Condition'}</h4>
-      <p>${escapeHTML(data.summary)}</p>
-    </div>
-    <div class="report-section">
-      <h4>🌦️ ${currentLang === 'hi' ? 'मौसम का असर' : 'Weather Context'}</h4>
-      <p>${escapeHTML(data.weatherImpact)}</p>
-    </div>
-    <div class="report-section">
-      <h4>💧 ${currentLang === 'hi' ? 'पानी की सलाह' : 'Water Advice'}</h4>
-      <p>${escapeHTML(data.waterAdvice)}</p>
-    </div>
-    ${data.concern ? `
-    <div class="report-section">
-      <h4>⚠️ ${currentLang === 'hi' ? 'ध्यान देने योग्य बात' : 'Caution / Observation'}</h4>
-      <p>${escapeHTML(data.concern)}</p>
-    </div>` : ''}
-    <div class="report-section">
-      <h4>✅ ${currentLang === 'hi' ? 'आज के मुख्य काम' : 'Actionable Steps for Today'}</h4>
-      <ul>${actionsList}</ul>
-    </div>
-    <div class="report-section">
-      <h4>👨‍🌾 ${currentLang === 'hi' ? 'कब विशेषज्ञ से मिलें' : 'When to Contact Expert'}</h4>
-      <p>${escapeHTML(data.expertHelp)}</p>
-    </div>
-  `;
-
-  currentSummaryTextToSpeak = `${data.summary}. ${data.waterAdvice}.`;
-}
-
-// reason: 'network' (default) | 'config' | 'invalid'
-function renderFallbackAnalysis(reason) {
-  const fallback = {
-    summary: currentLang === 'hi'
-      ? `आपकी फसल (${farmerProfile.crop}) की सामान्य सलाह नीचे दी गई है।`
-      : `Standard local guidance for your crop (${farmerProfile.crop}) is shown below.`,
-    weatherImpact: currentWeather
-      ? (currentLang === 'hi' ? `वर्तमान हवा का तापमान ${currentWeather.temp}°C और आज बारिश की संभावना ${currentWeather.rainChance}% है।` : `Current air temp is ${currentWeather.temp}°C with a ${currentWeather.rainChance}% rain chance today.`)
-      : (currentLang === 'hi' ? "मौसम की जानकारी नहीं मिली।" : "Weather info not available."),
-    waterAdvice: currentWeather && currentWeather.rainChance >= 50
-      ? (currentLang === 'hi' ? "बारिश की संभावना अधिक है, इसलिए आज सिंचाई रोक सकते हैं।" : "High chance of rain; consider postponing irrigation.")
-      : (currentLang === 'hi' ? "मिट्टी की ऊपरी 2 इंच परत में नमी देखकर ही पानी दें।" : "Check moisture in top 2 inches of soil before irrigating."),
-    concern: currentLang === 'hi'
-      ? "पीलापन या कीट दिखने पर स्थानीय कृषि विशेषज्ञ (KVK) से संपर्क करें।"
-      : "If symptoms persist, get them checked by local agriculture officials.",
-    actions: currentLang === 'hi'
-      ? ["खेत की नमी स्वयं जांचें", "पत्तियों के निचले हिस्से में कीट देखें", "मौसम के अनुसार काम करें"]
-      : ["Check soil moisture manually", "Inspect underside of leaves for pests", "Adjust work based on weather"],
-    expertHelp: currentLang === 'hi'
-      ? "यदि 3 दिन में स्थिति में सुधार न हो तो नज़दीकी कृषि विज्ञान केंद्र जाएं।"
-      : "Contact nearest Krishi Vigyan Kendra if condition does not improve in 3 days."
-  };
-  renderAnalysisResult(fallback, true, reason || "network");
-}
-
-/* ---------- VOICE INPUT (SpeechRecognition) ---------- */
-function startChatVoice() {
-  if (awaitingResponse) return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    alert(currentLang === 'hi' ? "इस ब्राउज़र में आवाज़ पहचान उपलब्ध नहीं है।" : "Voice recognition is not supported in this browser.");
-    return;
-  }
-
-  const recog = new SR();
-  recog.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
-  recog.onstart = () => {
-    document.getElementById("btnChatMic").textContent = "🔴";
-  };
-  recog.onresult = (e) => {
-    const text = e.results[0][0].transcript;
-    document.getElementById("chatInput").value = text;
-    handleUserResponse(text);
-  };
-  recog.onerror = () => {
-    document.getElementById("btnChatMic").textContent = "🎙️";
-  };
-  recog.onend = () => {
-    document.getElementById("btnChatMic").textContent = "🎙️";
-  };
-  recog.start();
-}
-
-function speakSummary() {
-  if (!('speechSynthesis' in window) || !currentSummaryTextToSpeak) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(currentSummaryTextToSpeak);
-  utterance.lang = currentLang === 'hi' ? 'hi-IN' : 'en-IN';
-  window.speechSynthesis.speak(utterance);
-}
-
-/* ---------- WEATHER (Open-Meteo Integration) ---------- */
-
-// WMO weather codes -> icon + short bilingual condition label.
-// (Bug fix: weather_code was fetched from the API but never actually used.)
-const WEATHER_CODES = {
-  0:  { icon: "☀️", hi: "साफ आसमान", en: "Clear sky" },
-  1:  { icon: "🌤️", hi: "मुख्यतः साफ", en: "Mainly clear" },
-  2:  { icon: "⛅", hi: "आंशिक बादल", en: "Partly cloudy" },
-  3:  { icon: "☁️", hi: "बादल छाए हुए", en: "Overcast" },
-  45: { icon: "🌫️", hi: "कोहरा", en: "Fog" },
-  48: { icon: "🌫️", hi: "कोहरा (पाला)", en: "Rime fog" },
-  51: { icon: "🌦️", hi: "हल्की बूंदाबांदी", en: "Light drizzle" },
-  53: { icon: "🌦️", hi: "बूंदाबांदी", en: "Drizzle" },
-  55: { icon: "🌧️", hi: "घनी बूंदाबांदी", en: "Dense drizzle" },
-  56: { icon: "🌧️", hi: "जमने वाली बूंदाबांदी", en: "Freezing drizzle" },
-  57: { icon: "🌧️", hi: "घनी जमने वाली बूंदाबांदी", en: "Dense freezing drizzle" },
-  61: { icon: "🌧️", hi: "हल्की बारिश", en: "Light rain" },
-  63: { icon: "🌧️", hi: "बारिश", en: "Rain" },
-  65: { icon: "🌧️", hi: "तेज़ बारिश", en: "Heavy rain" },
-  66: { icon: "🌧️", hi: "जमने वाली बारिश", en: "Freezing rain" },
-  67: { icon: "🌧️", hi: "तेज़ जमने वाली बारिश", en: "Heavy freezing rain" },
-  71: { icon: "🌨️", hi: "हल्की बर्फ़बारी", en: "Light snow" },
-  73: { icon: "🌨️", hi: "बर्फ़बारी", en: "Snow" },
-  75: { icon: "🌨️", hi: "तेज़ बर्फ़बारी", en: "Heavy snow" },
-  77: { icon: "🌨️", hi: "बर्फ़ के कण", en: "Snow grains" },
-  80: { icon: "🌦️", hi: "हल्की बौछारें", en: "Light showers" },
-  81: { icon: "🌧️", hi: "बौछारें", en: "Showers" },
-  82: { icon: "⛈️", hi: "तेज़ बौछारें", en: "Violent showers" },
-  85: { icon: "🌨️", hi: "हल्की बर्फ़ की बौछारें", en: "Light snow showers" },
-  86: { icon: "🌨️", hi: "तेज़ बर्फ़ की बौछारें", en: "Heavy snow showers" },
-  95: { icon: "⛈️", hi: "आंधी-तूफान", en: "Thunderstorm" },
-  96: { icon: "⛈️", hi: "तूफान (ओले संभव)", en: "Thunderstorm with hail" },
-  99: { icon: "⛈️", hi: "तेज़ तूफान (ओले)", en: "Severe thunderstorm with hail" }
-};
-
-function getWeatherInfo(code) {
-  const info = WEATHER_CODES[code] || { icon: "🌡️", hi: "जानकारी उपलब्ध नहीं", en: "Condition unavailable" };
-  return { icon: info.icon, label: currentLang === 'hi' ? info.hi : info.en };
-}
-
-function clearWeatherError() {
-  const el = document.getElementById("weatherError");
-  if (!el) return;
-  el.textContent = "";
-  el.classList.add("hidden");
-}
-
-function showWeatherError(msg) {
-  const el = document.getElementById("weatherError");
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.remove("hidden");
-}
-
-async function fetchByGPS() {
-  clearWeatherError();
-  document.getElementById("weatherResult").classList.add("hidden");
-
-  if (!navigator.geolocation) {
-    showWeatherError(tr("errWeather"));
-    return;
-  }
-  document.getElementById("weatherLoading").classList.remove("hidden");
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      await loadWeather(pos.coords.latitude, pos.coords.longitude, null);
-    },
-    () => {
-      document.getElementById("weatherLoading").classList.add("hidden");
-      showWeatherError(tr("errWeather"));
-    },
-    { timeout: 10000 }
-  );
-}
-
-async function fetchByCityName() {
-  const name = document.getElementById("cityInput").value.trim();
-  if (!name) return;
-
-  clearWeatherError();
-  document.getElementById("weatherResult").classList.add("hidden");
-  document.getElementById("weatherLoading").classList.remove("hidden");
-
-  try {
-    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`);
-    if (!res.ok) throw new Error("geocoding request failed");
-    const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      document.getElementById("weatherLoading").classList.add("hidden");
-      showWeatherError(tr("errCityNotFound"));
-      return;
-    }
-    const r = data.results[0];
-    const place = r.admin1 ? `${r.name}, ${r.admin1}` : r.name;
-    await loadWeather(r.latitude, r.longitude, place);
-  } catch (e) {
-    document.getElementById("weatherLoading").classList.add("hidden");
-    showWeatherError(tr("errGeneric"));
-  }
-}
-
-async function loadWeather(lat, lon, placeNameOverride) {
-  try {
-    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=precipitation_probability_max&timezone=auto`);
-    if (!res.ok) throw new Error("weather request failed");
-    const data = await res.json();
-    if (!data.current) throw new Error("no current weather in response");
-
-    currentWeather = {
-      place: placeNameOverride || `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
-      temp: Math.round(data.current.temperature_2m),
-      humidity: Math.round(data.current.relative_humidity_2m),
-      wind: Math.round(data.current.wind_speed_10m),
-      weatherCode: data.current.weather_code,
-      // This is the DAILY max rain PROBABILITY (%), not "it is currently raining".
-      rainChance: (data.daily && Array.isArray(data.daily.precipitation_probability_max))
-        ? data.daily.precipitation_probability_max[0]
-        : 0
-    };
-
-    renderWeather();
-    clearWeatherError();
-    document.getElementById("weatherLoading").classList.add("hidden");
-    document.getElementById("weatherResult").classList.remove("hidden");
-  } catch (e) {
-    document.getElementById("weatherLoading").classList.add("hidden");
-    showWeatherError(tr("errWeather"));
-  }
-}
-
-function renderWeather() {
-  if (!currentWeather) return;
-  document.getElementById("placeName").textContent = currentWeather.place;
-  document.getElementById("wTemp").textContent = currentWeather.temp + "°C";
-  document.getElementById("wRain").textContent = currentWeather.rainChance + "%";
-  document.getElementById("wHumidity").textContent = currentWeather.humidity + "%";
-  document.getElementById("wWind").textContent = currentWeather.wind + " km/h";
-
-  const info = getWeatherInfo(currentWeather.weatherCode);
-  document.getElementById("wIcon").textContent = info.icon;
-
-  // Populate the previously-unused advice paragraph with condition + a simple rule-based tip.
-  const adviceEl = document.getElementById("weatherAdvice");
-  let tip;
-  if (currentWeather.rainChance >= 60) {
-    tip = currentLang === 'hi'
-      ? "आज बारिश की संभावना अधिक है — सिंचाई रोकना बेहतर होगा।"
-      : "High rain chance today — consider postponing irrigation.";
-  } else if (currentWeather.rainChance <= 20 && currentWeather.humidity < 40) {
-    tip = currentLang === 'hi'
-      ? "मौसम शुष्क है — मिट्टी की नमी जांचकर ही सिंचाई करें।"
-      : "Dry conditions — check soil moisture before irrigating.";
-  } else {
-    tip = currentLang === 'hi'
-      ? "आज का मौसम सामान्य खेती कार्यों के लिए ठीक है।"
-      : "Conditions look fine for regular field work today.";
-  }
-  adviceEl.textContent = `${info.icon} ${info.label} — ${tip}`;
-
-  const snap = document.getElementById("homeSnapshot");
-  snap.classList.remove("hidden");
-  document.getElementById("snapWeather").textContent =
-    `🌦️ ${currentWeather.place}: ${currentWeather.temp}°C | ${currentLang === 'hi' ? 'आज बारिश' : 'Rain today'}: ${currentWeather.rainChance}%`;
-}
-
-/* ---------- CROPS GRID ---------- */
-const CROPS_LIST = [
-  { id: "wheat", icon: "🌾", hi: "गेहूं", en: "Wheat" },
-  { id: "rice", icon: "🌾", hi: "धान", en: "Rice" },
-  { id: "maize", icon: "🌽", hi: "मक्का", en: "Maize" },
-  { id: "potato", icon: "🥔", hi: "आलू", en: "Potato" },
-  { id: "tomato", icon: "🍅", hi: "टमाटर", en: "Tomato" },
-  { id: "mustard", icon: "🌿", hi: "सरसों", en: "Mustard" }
-];
-
-function renderCropGrid() {
-  const grid = document.getElementById("cropGrid");
-  if (!grid) return;
-  grid.innerHTML = "";
-  CROPS_LIST.forEach(c => {
-    const btn = document.createElement("button");
-    btn.className = "crop-item";
-    btn.innerHTML = `<span style="font-size:24px;">${c.icon}</span><br><strong>${currentLang === 'hi' ? c.hi : c.en}</strong>`;
-    btn.onclick = () => {
-      const cropName = currentLang === 'hi' ? c.hi : c.en;
-      // BUG FIX: pass the crop straight into startAssistant instead of relying on
-      // module-level farmerProfile.crop, which restartAssistant() used to wipe out.
-      startAssistant('text', cropName);
-    };
-    grid.appendChild(btn);
-  });
-}
-
-// Initial setup
-document.addEventListener("DOMContentLoaded", () => {
-  setLanguage("hi");
-  document.getElementById("chatInput").addEventListener("keypress", (e) => {
-    if (e.key === "Enter") submitChatInput();
-  });
-});
+  if (isFallba

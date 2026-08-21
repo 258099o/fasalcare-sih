@@ -186,4 +186,4 @@ function extractJSON(text) {
   } catch (e) {
     return null;
   }
-                                   }
+}

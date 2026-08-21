@@ -1,4 +1,3 @@
-/* =========================================================
    FasalCare — script.js
    Conversational AI Assistant + Open-Meteo Integration
    + My Farm Dashboard + Schemes + Soil Health + Market Prices

@@ -1,40 +1,4 @@
-   FasalCare — script.js
-   Conversational AI Assistant + Open-Meteo Integration
-   + My Farm Dashboard + Schemes + Soil Health + Market Prices
-   + Alerts + 7-Day Forecast + Today's Farm Brief
-   + localStorage persistence (no backend database)
-========================================================= */
-
-const T = {
-  hi: {
-    tagline: "आपकी खेती की आसान डिजिटल मदद",
-    cardWeather: "आज का मौसम", cardCrop: "मेरा फार्म", cardTips: "खेती की सलाह",
-    navHome: "होम", navAssistant: "सहायक", navWeather: "मौसम", navFarm: "मेरा फार्म",
-    assistantCardTitle: "मेरी खेती के बारे में पूछें",
-    assistantCardSubtitle: "अपने खेत की स्थिति बताएं और तुरंत विशेषज्ञ सलाह पाएं",
-    btnSpeak: "बोलकर बताएं", btnType: "लिखकर बताएं",
-    assistantHeader: "FasalCare सहायक",
-    typeAnswer: "अपना जवाब लिखें...", btnSend: "भेजें",
-    reviewTitle: "आपकी जानकारी",
-    btnAnalyzeText: "मेरी जानकारी का विश्लेषण करें",
-    btnAnalyzing: "विश्लेषण कर रहे हैं...",
-    summaryTitle: "FasalCare विश्लेषण रिपोर्ट",
-    listen: "सुनें", btnRestart: "🔄 नई जानकारी पूछें",
-
-    weatherTitle: "आज का मौसम", useLocation: "📍 मेरा स्थान बताएं", orText: "या",
-    cityPlaceholder: "अपना शहर/गांव लिखें", search: "खोजें",
-    loadingWeather: "मौसम की जानकारी ला रहे हैं…",
-    rainChance: "बारिश की संभावना",
-    humidity: "नमी", wind: "हवा",
-    forecastTitle: "अगले दिनों का पूर्वानुमान",
-
-    cropTitle: "मेरी फसल चुनें",
-    tipsTitle: "आज की खेती की सलाह",
-
-    farmTitle: "मेरा फार्म",
-    briefTitle: "आज की फार्म संक्षिप्त जानकारी",
-    briefNoProfile: "पहले सहायक के साथ अपनी फसल की जानकारी भरें, फिर यहां संक्षिप्त जानकारी दिखेगी।",
-    briefCropOk: "कोई विशेष समस्या दर्ज नहीं की गई।",
+     briefCropOk: "कोई विशेष समस्या दर्ज नहीं की गई।",
     briefPriorities: "आज की प्राथमिकताएं",
     briefAllGood: "अभी कोई विशेष चेतावनी नहीं है — सामान्य देखभाल जारी रखें।",
     briefRunAssistant: "AI सहायक से पूरा विश्लेषण पाएं",
